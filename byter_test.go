@@ -56,7 +56,7 @@ func TestByter(t *testing.T) {
 		})
 	})
 
-	convey.Convey("Date with pointer result", t, func() {
+	convey.Convey("Date DecodeTo with pointer result", t, func() {
 		convey.Convey("encode", func() {
 			data := time.Now()
 			bs, e = b.Encode(data)
@@ -64,23 +64,37 @@ func TestByter(t *testing.T) {
 			convey.Convey("decode", func() {
 				var dest time.Time
 				e := b.DecodeTo(bs, &dest, nil)
-				convey.Printf("\nOriginal: %v Result: %v\n", data, dest)
+				//convey.Printf("\nOriginal: %v Result: %v\n", data, dest)
 				convey.So(e, convey.ShouldBeNil)
 				convey.So(dest.Unix(), convey.ShouldEqual, data.Unix())
 			})
 		})
 	})
 
-	convey.Convey("Date without pointer result", t, func() {
+	convey.Convey("Date Decode without pointer result", t, func() {
 		convey.Convey("encode", func() {
 			data := time.Now()
 			bs, e = b.Encode(data)
 			convey.So(e, convey.ShouldBeNil)
 			convey.Convey("decode", func() {
 				dest, e := b.Decode(bs, time.Time{}, nil)
-				convey.Printf("\nOriginal: %v Result: %v\n", data, dest)
+				//convey.Printf("\nOriginal: %v Result: %v\n", data, dest)
 				convey.So(e, convey.ShouldBeNil)
 				convey.So(dest.(time.Time).Unix(), convey.ShouldEqual, data.Unix())
+			})
+		})
+	})
+
+	convey.Convey("Date Decode with pointer result", t, func() {
+		convey.Convey("encode", func() {
+			data := time.Now()
+			bs, e = b.Encode(data)
+			convey.So(e, convey.ShouldBeNil)
+			convey.Convey("decode", func() {
+				dest, e := b.Decode(bs, &time.Time{}, nil)
+				//convey.Printf("\nOriginal: %v Result: %v\n", data, dest)
+				convey.So(e, convey.ShouldBeNil)
+				convey.So(dest.(*time.Time).Unix(), convey.ShouldEqual, data.Unix())
 			})
 		})
 	})
