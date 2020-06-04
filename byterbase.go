@@ -43,79 +43,88 @@ func (b *ByterBase) Encode(data interface{}) ([]byte, error) {
 	}
 }
 
-func (b *ByterBase) Decode(bits []byte, target interface{}, config toolkit.M) (interface{}, error) {
+func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (interface{}, error) {
 	if b.decoder != nil {
-		return b.decoder(bits, target, config)
+		return b.decoder(bits, typeref, config)
 	}
 
-	var dest interface{}
+	//-- get indirect type
+	var res interface{}
+	var resType reflect.Type
 	targetIsPtr := false
-	v := reflect.ValueOf(target)
+	v := reflect.ValueOf(typeref)
 	if v.Kind() == reflect.Ptr {
 		targetIsPtr = true
-		dest = v.Elem().Interface()
+		res = v.Elem().Interface()
+		resType = v.Elem().Type()
 	} else {
-		dest = target
+		res = typeref
+		resType = v.Type()
 	}
-	switch dest.(type) {
+
+	//-- decode based on indirect type
+	switch res.(type) {
 	case string:
-		return string(bits), nil
+		res = string(bits)
 
 	case int, int8, int16, int32, int64, float32, float64:
 		bits := binary.LittleEndian.Uint64(bits)
 		f := math.Float64frombits(bits)
 
-		switch dest.(type) {
+		switch res.(type) {
 		case int, int8, int16, int32, int64:
-			return int(f), nil
+			res = int(f)
 		case float32:
-			return float32(f), nil
+			res = float32(f)
 		case float64:
-			return f, nil
+			res = f
 		default:
 			return 0, fmt.Errorf("invalid type")
 		}
 
 	default:
 		var targetPtr interface{}
-		if !targetIsPtr {
-			targetPtr = reflect.New(reflect.TypeOf(target)).Interface()
-		} else {
-			targetPtr = target
-		}
+		targetPtr = reflect.New(resType).Interface()
 		if err := toolkit.FromBytes(bits, "json", targetPtr); err != nil {
-			return nil, fmt.Errorf("unable to serialize return object. %s", err.Error())
+			return nil, fmt.Errorf("unable to serialize return object, type: %s, error: %s", resType, err.Error())
 		}
 		if targetIsPtr {
 			return targetPtr, nil
 		}
 		return reflect.ValueOf(targetPtr).Elem().Interface(), nil
 	}
+
+	// if target is pointer, we need to return pointer as well
+	if targetIsPtr {
+		vres := reflect.New(resType)
+		vres.Elem().Set(reflect.ValueOf(res))
+		return vres.Interface(), nil
+	}
+	return res, nil
 }
 
 func (b *ByterBase) DecodeTo(bits []byte, dest interface{}, config toolkit.M) error {
 	if config == nil {
 		config = toolkit.M{}
 	}
-	config.Set(KeyReferenceObj, dest)
-	result, err := b.Decode(bits, dest, config)
 
 	vdest := reflect.ValueOf(dest)
-	vres := reflect.ValueOf(result)
-	if vdest.Kind() == reflect.Ptr {
-		if vres.Kind() == reflect.Ptr {
-			vdest.Elem().Set(vres.Elem())
-		} else {
-			vdest.Elem().Set(vres)
-		}
-	} else {
-		if vres.Kind() == reflect.Ptr {
-			vdest.Set(vres.Elem())
-		} else {
-			vdest.Set(vres)
-		}
+	if vdest.Kind() != reflect.Ptr {
+		return fmt.Errorf("decode need a pointer reference for destination")
 	}
-	return err
+
+	result, err := b.Decode(bits, dest, config)
+	if err != nil {
+		return err
+	}
+
+	vres := reflect.ValueOf(result)
+	if vres.Kind() == reflect.Ptr {
+		vdest.Elem().Set(vres.Elem())
+	} else {
+		vdest.Elem().Set(vres)
+	}
+	return nil
 }
 
 func (b *ByterBase) SetEncoder(encoder func(interface{}) ([]byte, error)) {
