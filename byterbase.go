@@ -35,6 +35,10 @@ func (b *ByterBase) Encode(data interface{}) ([]byte, error) {
 		return bs, nil
 
 	default:
+		if data == nil {
+			return []byte{}, nil
+		}
+
 		bs, e := json.Marshal(data)
 		if e != nil {
 			return nil, fmt.Errorf("error: %s", e.Error())
@@ -48,7 +52,7 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (
 		return b.decoder(bits, typeref, config)
 	}
 
-	//-- get indirect type
+	//-- get indirect type and prepare a result object based on indirect type
 	var res interface{}
 	var resType reflect.Type
 	targetIsPtr := false
@@ -62,7 +66,7 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (
 		resType = v.Type()
 	}
 
-	//-- decode based on indirect type
+	//-- decode based on indirect type and store the result into res object
 	switch res.(type) {
 	case string:
 		res = string(bits)
@@ -83,6 +87,10 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (
 		}
 
 	default:
+		if len(bits) == 0 {
+			return nil, nil
+		}
+
 		var targetPtr interface{}
 		targetPtr = reflect.New(resType).Interface()
 		if err := toolkit.FromBytes(bits, "json", targetPtr); err != nil {
@@ -110,7 +118,7 @@ func (b *ByterBase) DecodeTo(bits []byte, dest interface{}, config toolkit.M) er
 
 	vdest := reflect.ValueOf(dest)
 	if vdest.Kind() != reflect.Ptr {
-		return fmt.Errorf("decode need a pointer reference for destination")
+		return fmt.Errorf("decode need a pointer reference as the target")
 	}
 
 	result, err := b.Decode(bits, dest, config)
