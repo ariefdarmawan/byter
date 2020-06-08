@@ -28,8 +28,14 @@ func (b *ByterBase) Encode(data interface{}) ([]byte, error) {
 	case string, *string:
 		return []byte(data.(string)), nil
 
-	case int, int8, int16, int32, int64, float32, float64:
-		bits := math.Float64bits(toolkit.ToFloat64(data, 12, toolkit.RoundingAuto))
+	case int, int8, int16, int32, int64:
+		bits := math.Float64bits(toolkit.ToFloat64(data, 8, toolkit.RoundingAuto))
+		bs := make([]byte, 8)
+		binary.LittleEndian.PutUint64(bs, bits)
+		return bs, nil
+
+	case float32, float64:
+		bits := math.Float64bits(toolkit.ToFloat64(data, 8, toolkit.RoundingAuto))
 		bs := make([]byte, 8)
 		binary.LittleEndian.PutUint64(bs, bits)
 		return bs, nil
