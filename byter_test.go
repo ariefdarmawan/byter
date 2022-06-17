@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ariefdarmawan/byter"
-	"github.com/eaciit/toolkit"
+	"github.com/sebarcode/codekit"
 	"github.com/smartystreets/goconvey/convey"
 )
 
@@ -31,7 +31,7 @@ func TestByter(t *testing.T) {
 
 	convey.Convey("Int", t, func() {
 		convey.Convey("encode", func() {
-			data := toolkit.RandInt(1000)
+			data := codekit.RandInt(1000)
 			bs, e = b.Encode(data)
 			convey.So(e, convey.ShouldBeNil)
 			convey.Convey("decode", func() {

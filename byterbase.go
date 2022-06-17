@@ -7,7 +7,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/eaciit/toolkit"
+	"github.com/sebarcode/codekit"
 )
 
 type ByterBase struct {
@@ -29,13 +29,13 @@ func (b *ByterBase) Encode(data interface{}) ([]byte, error) {
 		return []byte(data.(string)), nil
 
 	case int, int8, int16, int32, int64:
-		bits := math.Float64bits(toolkit.ToFloat64(data, 8, toolkit.RoundingAuto))
+		bits := math.Float64bits(codekit.ToFloat64(data, 8, codekit.RoundingAuto))
 		bs := make([]byte, 8)
 		binary.LittleEndian.PutUint64(bs, bits)
 		return bs, nil
 
 	case float32, float64:
-		bits := math.Float64bits(toolkit.ToFloat64(data, 8, toolkit.RoundingAuto))
+		bits := math.Float64bits(codekit.ToFloat64(data, 8, codekit.RoundingAuto))
 		bs := make([]byte, 8)
 		binary.LittleEndian.PutUint64(bs, bits)
 		return bs, nil
@@ -53,7 +53,7 @@ func (b *ByterBase) Encode(data interface{}) ([]byte, error) {
 	}
 }
 
-func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (interface{}, error) {
+func (b *ByterBase) Decode(bits []byte, typeref interface{}, config codekit.M) (interface{}, error) {
 	if b.decoder != nil {
 		return b.decoder(bits, typeref, config)
 	}
@@ -99,7 +99,7 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (
 
 		var targetPtr interface{}
 		targetPtr = reflect.New(resType).Interface()
-		if err := toolkit.FromBytes(bits, "json", targetPtr); err != nil {
+		if err := codekit.FromBytes(bits, "json", targetPtr); err != nil {
 			return nil, fmt.Errorf("unable to serialize return object, type: %s, error: %s", resType, err.Error())
 		}
 		if targetIsPtr {
@@ -117,9 +117,9 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config toolkit.M) (
 	return res, nil
 }
 
-func (b *ByterBase) DecodeTo(bits []byte, dest interface{}, config toolkit.M) error {
+func (b *ByterBase) DecodeTo(bits []byte, dest interface{}, config codekit.M) error {
 	if config == nil {
-		config = toolkit.M{}
+		config = codekit.M{}
 	}
 
 	vdest := reflect.ValueOf(dest)
@@ -145,6 +145,6 @@ func (b *ByterBase) SetEncoder(encoder func(interface{}) ([]byte, error)) {
 	b.encoder = encoder
 }
 
-func (b *ByterBase) SetDecoder(decoder func([]byte, interface{}, toolkit.M) (interface{}, error)) {
+func (b *ByterBase) SetDecoder(decoder func([]byte, interface{}, codekit.M) (interface{}, error)) {
 	b.decoder = decoder
 }
