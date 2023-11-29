@@ -24,9 +24,18 @@ func (b *ByterBase) Encode(data interface{}) ([]byte, error) {
 		return b.encoder(data)
 	}
 
-	switch data.(type) {
-	case string, *string:
-		return []byte(data.(string)), nil
+	switch typedData := data.(type) {
+	case []byte:
+		return typedData, nil
+
+	case string:
+		return []byte(typedData), nil
+
+	case *string:
+		if typedData != nil {
+			return []byte{}, nil
+		}
+		return []byte(*typedData), nil
 
 	case int, int8, int16, int32, int64:
 		bits := math.Float64bits(codekit.ToFloat64(data, 8, codekit.RoundingAuto))
