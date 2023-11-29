@@ -83,6 +83,9 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config codekit.M) (
 
 	//-- decode based on indirect type and store the result into res object
 	switch res.(type) {
+	case []byte:
+		res = bits
+
 	case string:
 		res = string(bits)
 
