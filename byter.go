@@ -1,6 +1,10 @@
 package byter
 
-import "github.com/sebarcode/codekit"
+import (
+	"fmt"
+
+	"github.com/sebarcode/codekit"
+)
 
 var (
 	byters = map[string]func() Byter{}
@@ -23,4 +27,33 @@ func NewByter(name string) Byter {
 		return new(ByterBase)
 	}
 	return fn()
+}
+
+func Cast(b Byter, source interface{}, destTo interface{}, config codekit.M) error {
+	if config == nil {
+		config = codekit.M{}
+	}
+
+	bs, err := b.Encode(source)
+	if err != nil {
+		return fmt.Errorf("encode: %s", err.Error())
+	}
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				if err != nil {
+					return
+				}
+				err = fmt.Errorf("panic: %v", r)
+			}
+		}()
+
+		err = b.DecodeTo(bs, destTo, config)
+		if err != nil {
+			return
+		}
+	}()
+
+	return err
 }

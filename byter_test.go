@@ -99,3 +99,32 @@ func TestByter(t *testing.T) {
 		})
 	})
 }
+
+func TestCast(t *testing.T) {
+	type tmpType struct {
+		Name       string
+		ValueInt   int
+		ValueFloat float64
+		Date       *time.Time
+	}
+
+	convey.Convey("cast", t, func() {
+		var dest *tmpType
+
+		b := byter.NewByter("")
+		source := codekit.M{}.Set("Name", "Name 1").Set("ValueFloat", 120.05).Set("Date", time.Now())
+
+		convey.Convey("cast to nil", func() {
+			err := byter.Cast(b, source, dest, nil)
+			convey.So(err, convey.ShouldNotBeNil)
+			convey.Printf(" %s", err.Error())
+		})
+
+		convey.Convey("cast to not nil", func() {
+			dest = new(tmpType)
+			err := byter.Cast(b, source, dest, nil)
+			convey.So(err, convey.ShouldBeNil)
+			convey.Printf(" %s", codekit.JsonString(dest))
+		})
+	})
+}
