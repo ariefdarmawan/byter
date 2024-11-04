@@ -3,6 +3,7 @@ package byter
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -132,6 +133,10 @@ func (b *ByterBase) Decode(bits []byte, typeref interface{}, config codekit.M) (
 func (b *ByterBase) DecodeTo(bits []byte, dest interface{}, config codekit.M) error {
 	if config == nil {
 		config = codekit.M{}
+	}
+
+	if len(bits) == 0 {
+		return errors.New("empty")
 	}
 
 	vdest := reflect.ValueOf(dest)
